@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Dark theme variant -->
+    <style name="Theme.OceanIsleTideWidget" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/ocean_blue</item>
+        <item name="colorPrimaryVariant">@color/deep_blue</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/wave_light</item>
+        <item name="colorSecondaryVariant">@color/wave_dark</item>
+        <item name="colorOnSecondary">@color/white</item>
+
+        <!-- Dark background colors -->
+        <item name="android:colorBackground">#121212</item>
+        <item name="colorSurface">#1E1E1E</item>
+        <item name="colorOnSurface">@color/white</item>
+
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+        <item name="android:navigationBarColor" tools:targetApi="l">?attr/colorSurface</item>
+    </style>
+
+    <!-- Widget container theme for dark mode -->
+    <style name="Theme.OceanIsleTideWidget.AppWidgetContainer" parent="Theme.OceanIsleTideWidget">
+        <!-- Transparent system bars for widgets -->
+        <item name="android:statusBarColor" tools:targetApi="l">@android:color/transparent</item>
+        <item name="android:navigationBarColor" tools:targetApi="l">@android:color/transparent</item>
+    </style>
+</resources>

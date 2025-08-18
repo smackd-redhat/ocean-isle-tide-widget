@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Ocean Isle Tide Widget</string>
+    <string name="widget_description">Shows tide chart for Ocean Isle Beach, NC in beautiful wave format</string>
+    <string name="widget_name">Ocean Isle Tide</string>
+    <string name="loading">Loading tide data...</string>
+    <string name="error_loading">Error loading tide data</string>
+    <string name="refresh">Refresh</string>
+    <string name="add_widget">Add Widget</string>
+    <string name="location_name">Ocean Isle Beach, NC</string>
+</resources>

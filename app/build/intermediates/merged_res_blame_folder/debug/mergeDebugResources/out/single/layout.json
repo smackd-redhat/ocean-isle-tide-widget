@@ -1,0 +1,18 @@
+[
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-mergeDebugResources-42:/layout/activity_main.xml",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/layout/activity_main.xml"
+    },
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-mergeDebugResources-42:/layout/tide_widget.xml",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/layout/tide_widget.xml"
+    },
+    {
+        "merged": "com.tidewidget.app-mergeDebugResources-42:/layout/tide_widget.xml",
+        "source": "com.tidewidget.app-main-45:/layout/tide_widget.xml"
+    },
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-mergeDebugResources-42:/layout/activity_widget_config.xml",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/layout/activity_widget_config.xml"
+    }
+]

@@ -1,0 +1,58 @@
+[
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-debug-43:/layout_tide_widget.xml.flat",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/layout/tide_widget.xml"
+    },
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-debug-43:/drawable_widget_preview.xml.flat",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/drawable/widget_preview.xml"
+    },
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-debug-43:/xml_data_extraction_rules.xml.flat",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/xml/data_extraction_rules.xml"
+    },
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-debug-43:/xml_backup_rules.xml.flat",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/xml/backup_rules.xml"
+    },
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-debug-43:/xml_tide_widget_info.xml.flat",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/xml/tide_widget_info.xml"
+    },
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-debug-43:/drawable_chart_background.xml.flat",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/drawable/chart_background.xml"
+    },
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-debug-43:/layout_activity_widget_config.xml.flat",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/layout/activity_widget_config.xml"
+    },
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-debug-43:/color_purple_500.xml.flat",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/color/purple_500.xml"
+    },
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-debug-43:/drawable_button_primary.xml.flat",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/drawable/button_primary.xml"
+    },
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-debug-43:/layout_activity_main.xml.flat",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/layout/activity_main.xml"
+    },
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-debug-43:/drawable_button_secondary.xml.flat",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/drawable/button_secondary.xml"
+    },
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-debug-43:/drawable_ic_tide_widget.xml.flat",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/drawable/ic_tide_widget.xml"
+    },
+    {
+        "merged": "com.tidewidget.app-debug-43:/xml_tide_widget_info.xml.flat",
+        "source": "com.tidewidget.app-main-45:/xml/tide_widget_info.xml"
+    },
+    {
+        "merged": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-debug-43:/drawable_widget_background.xml.flat",
+        "source": "/home/madisonj/.gradle/daemon/8.13/com.tidewidget.app-main-45:/drawable/widget_background.xml"
+    }
+]

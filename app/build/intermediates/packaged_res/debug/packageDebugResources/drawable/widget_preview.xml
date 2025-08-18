@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="250dp"
+    android:height="110dp"
+    android:viewportWidth="250"
+    android:viewportHeight="110">
+    
+    <!-- Widget Background -->
+    <path
+        android:fillColor="@color/widget_background"
+        android:strokeColor="@color/grid_line"
+        android:strokeWidth="1"
+        android:pathData="M0,0 L250,0 L250,110 L0,110 Z" />
+    
+    <!-- Sample Wave -->
+    <path
+        android:fillColor="@color/ocean_blue"
+        android:pathData="M10,60 Q50,40 90,60 T170,60 Q210,40 240,60 L240,90 L10,90 Z" />
+        
+</vector>

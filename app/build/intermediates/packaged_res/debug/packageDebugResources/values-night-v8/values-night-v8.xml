@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:ns1="http://schemas.android.com/tools">
+    <color name="background">#121212</color>
+    <color name="grid_line">#404040</color>
+    <color name="text_primary">#E0E0E0</color>
+    <color name="text_secondary">#A0A0A0</color>
+    <color name="widget_background">#1E1E1E</color>
+    <style name="Theme.OceanIsleTideWidget" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        
+        <item name="colorPrimary">@color/ocean_blue</item>
+        <item name="colorPrimaryVariant">@color/deep_blue</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/wave_light</item>
+        <item name="colorSecondaryVariant">@color/wave_dark</item>
+        <item name="colorOnSecondary">@color/white</item>
+
+        
+        <item name="android:colorBackground">#121212</item>
+        <item name="colorSurface">#1E1E1E</item>
+        <item name="colorOnSurface">@color/white</item>
+
+        
+        <item name="android:statusBarColor" ns1:targetApi="l">?attr/colorPrimaryVariant</item>
+        <item name="android:navigationBarColor" ns1:targetApi="l">?attr/colorSurface</item>
+    </style>
+    <style name="Theme.OceanIsleTideWidget.AppWidgetContainer" parent="Theme.OceanIsleTideWidget">
+        
+        <item name="android:statusBarColor" ns1:targetApi="l">@android:color/transparent</item>
+        <item name="android:navigationBarColor" ns1:targetApi="l">@android:color/transparent</item>
+    </style>
+</resources>

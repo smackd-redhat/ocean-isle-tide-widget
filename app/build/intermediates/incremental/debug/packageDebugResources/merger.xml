@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merger version="3" xmlns:ns1="http://schemas.android.com/tools"><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="main" generated-set="main$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res"><file name="tide_widget" path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/layout/tide_widget.xml" qualifiers="" type="layout"/><file name="activity_main" path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/layout/activity_main.xml" qualifiers="" type="layout"/><file name="activity_widget_config" path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/layout/activity_widget_config.xml" qualifiers="" type="layout"/><file name="widget_background" path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/drawable/widget_background.xml" qualifiers="" type="drawable"/><file name="chart_background" path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/drawable/chart_background.xml" qualifiers="" type="drawable"/><file name="button_primary" path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/drawable/button_primary.xml" qualifiers="" type="drawable"/><file name="button_secondary" path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/drawable/button_secondary.xml" qualifiers="" type="drawable"/><file name="ic_tide_widget" path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/drawable/ic_tide_widget.xml" qualifiers="" type="drawable"/><file name="widget_preview" path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/drawable/widget_preview.xml" qualifiers="" type="drawable"/><file name="tide_widget_info" path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/xml/tide_widget_info.xml" qualifiers="" type="xml"/><file name="data_extraction_rules" path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/xml/data_extraction_rules.xml" qualifiers="" type="xml"/><file name="backup_rules" path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/xml/backup_rules.xml" qualifiers="" type="xml"/><file path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/values/strings.xml" qualifiers=""><string name="app_name">Ocean Isle Tide Widget</string><string name="widget_description">Shows tide chart for Ocean Isle Beach, NC in beautiful wave format</string><string name="widget_name">Ocean Isle Tide</string><string name="loading">Loading tide data...</string><string name="error_loading">Error loading tide data</string><string name="refresh">Refresh</string><string name="add_widget">Add Widget</string><string name="location_name">Ocean Isle Beach, NC</string></file><file path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/values/themes.xml" qualifiers=""><style name="Theme.OceanIsleTideWidget" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+            
+            <item name="colorPrimary">@color/ocean_blue</item>
+            <item name="colorPrimaryVariant">@color/deep_blue</item>
+            <item name="colorOnPrimary">@color/widget_background</item>
+            <item name="colorSecondary">@color/wave_light</item>
+            <item name="colorSecondaryVariant">@color/wave_dark</item>
+            <item name="colorOnSecondary">@color/text_primary</item>
+
+            
+            <item name="android:colorBackground">@color/background</item>
+            <item name="colorSurface">@color/widget_background</item>
+            <item name="colorOnSurface">@color/text_primary</item>
+
+            
+            <item name="android:statusBarColor" ns1:targetApi="l">?attr/colorPrimaryVariant</item>
+        </style><style name="Theme.OceanIsleTideWidget.AppWidgetContainer" parent="Theme.OceanIsleTideWidget">
+            
+            <item name="android:statusBarColor" ns1:targetApi="l">@android:color/transparent</item>
+            <item name="android:navigationBarColor" ns1:targetApi="l">@android:color/transparent</item>
+        </style></file><file path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/values/colors.xml" qualifiers=""><color name="ocean_blue">#4A90E2</color><color name="deep_blue">#2E5B8A</color><color name="wave_light">#87CEEB</color><color name="wave_dark">#4682B4</color><color name="tide_high">#FF9500</color><color name="tide_low">#FF6B35</color><color name="current_time">#FF3B30</color><color name="rising_tide">#4CAF50</color><color name="falling_tide">#FF5722</color><color name="grid_line">#E0E0E0</color><color name="text_primary">#333333</color><color name="text_secondary">#666666</color><color name="background">#F8F9FA</color><color name="widget_background">#FFFFFF</color><color name="white">#FFFFFF</color><color name="black">#000000</color></file><file name="purple_500" path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/color/purple_500.xml" qualifiers="" type="color"/><file path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/values-night/themes.xml" qualifiers="night-v8"><style name="Theme.OceanIsleTideWidget" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        
+        <item name="colorPrimary">@color/ocean_blue</item>
+        <item name="colorPrimaryVariant">@color/deep_blue</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/wave_light</item>
+        <item name="colorSecondaryVariant">@color/wave_dark</item>
+        <item name="colorOnSecondary">@color/white</item>
+
+        
+        <item name="android:colorBackground">#121212</item>
+        <item name="colorSurface">#1E1E1E</item>
+        <item name="colorOnSurface">@color/white</item>
+
+        
+        <item name="android:statusBarColor" ns1:targetApi="l">?attr/colorPrimaryVariant</item>
+        <item name="android:navigationBarColor" ns1:targetApi="l">?attr/colorSurface</item>
+    </style><style name="Theme.OceanIsleTideWidget.AppWidgetContainer" parent="Theme.OceanIsleTideWidget">
+        
+        <item name="android:statusBarColor" ns1:targetApi="l">@android:color/transparent</item>
+        <item name="android:navigationBarColor" ns1:targetApi="l">@android:color/transparent</item>
+    </style></file><file path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/main/res/values-night/colors.xml" qualifiers="night-v8"><color name="text_primary">#E0E0E0</color><color name="text_secondary">#A0A0A0</color><color name="background">#121212</color><color name="widget_background">#1E1E1E</color><color name="grid_line">#404040</color></file></source></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="debug" generated-set="debug$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/src/debug/res"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated$Generated" generated="true" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/build/generated/res/resValues/debug"/></dataSet><dataSet aapt-namespace="http://schemas.android.com/apk/res-auto" config="generated" generated-set="generated$Generated" ignore_pattern="!.svn:!.git:!.ds_store:!*.scc:.*:&lt;dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~"><source path="/home/madisonj/AI-PLAY/ocean-isle-tide-widget/app/build/generated/res/resValues/debug"/></dataSet><mergedItems/></merger>

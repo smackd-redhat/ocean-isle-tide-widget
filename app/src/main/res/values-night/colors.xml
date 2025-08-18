@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme color variants -->
+    <color name="text_primary">#E0E0E0</color>
+    <color name="text_secondary">#A0A0A0</color>
+    <color name="background">#121212</color>
+    <color name="widget_background">#1E1E1E</color>
+    <color name="grid_line">#404040</color>
+</resources>
