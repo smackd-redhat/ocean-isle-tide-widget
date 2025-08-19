@@ -220,9 +220,9 @@ class TideWaveView @JvmOverloads constructor(
             val timeProgress = i.toFloat() / numPoints
             val timeHours = timeProgress * 24f // 24 hours
             
-            // Apply canal lag and slight amplitude reduction (canals have less tidal range)
+            // Apply canal lag with same amplitude
             val laggedTimeHours = timeHours - canalLagHours
-            val canalParams = tideParams.copy(amplitude = tideParams.amplitude * 0.85f) // 15% less amplitude
+            val canalParams = tideParams // Same amplitude as ocean tide
             
             // Generate smooth sine wave based on lagged tidal pattern
             val height = generateSineWaveHeight(laggedTimeHours, canalParams)
