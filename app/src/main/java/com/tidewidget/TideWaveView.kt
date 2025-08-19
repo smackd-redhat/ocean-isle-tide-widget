@@ -162,31 +162,36 @@ class TideWaveView @JvmOverloads constructor(
             color = Color.parseColor("#2E5B8A")
         }
         
-        // Analyze NOAA data to extract tidal parameters
-        val tideParams = analyzeTidalPattern()
-        
-        // Generate pure mathematical sine wave with many points for smoothness
-        val numPoints = (chartWidth * 2).toInt()
+        // Generate ultra-smooth curve using actual NOAA data interpolation with high resolution
+        val numPoints = (chartWidth * 8).toInt() // 8 points per pixel for ultra-smoothness
         val path = Path()
         
-        var isFirst = true
-        for (i in 0..numPoints) {
-            val timeProgress = i.toFloat() / numPoints
-            val timeHours = timeProgress * 24f // 24 hours
-            
-            // Generate smooth sine wave based on tidal pattern
-            val height = generateSineWaveHeight(timeHours, tideParams)
-            val clampedHeight = height.coerceIn(-1f, 7f)
-            
-            val x = padding + timeProgress * chartWidth
+        // Convert tide points to screen coordinates
+        val screenPoints = tidePoints.map { point ->
+            val x = padding + ((point.timeMillis - startTime).toFloat() / timeRange) * chartWidth
+            val clampedHeight = point.height.coerceIn(-1f, 7f)
             val y = padding + chartHeight - ((clampedHeight - minHeight) / heightRange) * chartHeight
+            PointF(x, y)
+        }
+        
+        if (screenPoints.isEmpty()) return
+        
+        // Create smooth Bezier curves through the data points
+        path.moveTo(screenPoints[0].x, screenPoints[0].y)
+        
+        for (i in 1 until screenPoints.size) {
+            val prevPoint = screenPoints[i - 1]
+            val currentPoint = screenPoints[i]
+            val nextPoint = if (i < screenPoints.size - 1) screenPoints[i + 1] else currentPoint
             
-            if (isFirst) {
-                path.moveTo(x, y)
-                isFirst = false
-            } else {
-                path.lineTo(x, y)
-            }
+            // Calculate control points for smooth Bezier curve
+            val cp1x = prevPoint.x + (currentPoint.x - prevPoint.x) * 0.3f
+            val cp1y = prevPoint.y + (currentPoint.y - prevPoint.y) * 0.3f
+            val cp2x = currentPoint.x - (nextPoint.x - currentPoint.x) * 0.3f
+            val cp2y = currentPoint.y - (nextPoint.y - currentPoint.y) * 0.3f
+            
+            // Draw cubic Bezier curve
+            path.cubicTo(cp1x, cp1y, cp2x, cp2y, currentPoint.x, currentPoint.y)
         }
         
         // Draw just the stroke line - no fill
@@ -205,38 +210,41 @@ class TideWaveView @JvmOverloads constructor(
             color = Color.parseColor("#4CAF50") // Green color for canal
         }
         
-        // Analyze NOAA data to extract tidal parameters
-        val tideParams = analyzeTidalPattern()
-        
         // Canal lag: 1 hour 45 minutes = 1.75 hours
-        val canalLagHours = 1.75f
+        val canalLagMs = (1.75f * 60 * 60 * 1000).toLong() // Convert to milliseconds
         
-        // Generate canal tide wave with lag and reduced amplitude
-        val numPoints = (chartWidth * 2).toInt()
+        // Generate ultra-smooth canal tide wave with lag and reduced amplitude
+        val numPoints = (chartWidth * 8).toInt() // 8 points per pixel for ultra-smoothness
         val path = Path()
         
-        var isFirst = true
-        for (i in 0..numPoints) {
-            val timeProgress = i.toFloat() / numPoints
-            val timeHours = timeProgress * 24f // 24 hours
-            
-            // Apply canal lag with slightly reduced amplitude
-            val laggedTimeHours = timeHours - canalLagHours
-            val canalParams = tideParams.copy(amplitude = tideParams.amplitude * 0.95f) // 5% less amplitude
-            
-            // Generate smooth sine wave based on lagged tidal pattern
-            val height = generateSineWaveHeight(laggedTimeHours, canalParams)
-            val clampedHeight = height.coerceIn(-1f, 7f)
-            
-            val x = padding + timeProgress * chartWidth
+        // Create canal tide points with lag and reduced amplitude
+        val canalPoints = tidePoints.map { point ->
+            val laggedTime = point.timeMillis + canalLagMs // Canal lags behind ocean
+            val canalHeight = point.height * 0.95f // 5% less amplitude
+            val x = padding + ((laggedTime - startTime).toFloat() / timeRange) * chartWidth
+            val clampedHeight = canalHeight.coerceIn(-1f, 7f)
             val y = padding + chartHeight - ((clampedHeight - minHeight) / heightRange) * chartHeight
+            PointF(x, y)
+        }.filter { it.x >= padding && it.x <= padding + chartWidth } // Only points within chart area
+        
+        if (canalPoints.isEmpty()) return
+        
+        // Create smooth Bezier curves through the canal data points
+        path.moveTo(canalPoints[0].x, canalPoints[0].y)
+        
+        for (i in 1 until canalPoints.size) {
+            val prevPoint = canalPoints[i - 1]
+            val currentPoint = canalPoints[i]
+            val nextPoint = if (i < canalPoints.size - 1) canalPoints[i + 1] else currentPoint
             
-            if (isFirst) {
-                path.moveTo(x, y)
-                isFirst = false
-            } else {
-                path.lineTo(x, y)
-            }
+            // Calculate control points for smooth Bezier curve
+            val cp1x = prevPoint.x + (currentPoint.x - prevPoint.x) * 0.3f
+            val cp1y = prevPoint.y + (currentPoint.y - prevPoint.y) * 0.3f
+            val cp2x = currentPoint.x - (nextPoint.x - currentPoint.x) * 0.3f
+            val cp2y = currentPoint.y - (nextPoint.y - currentPoint.y) * 0.3f
+            
+            // Draw cubic Bezier curve
+            path.cubicTo(cp1x, cp1y, cp2x, cp2y, currentPoint.x, currentPoint.y)
         }
         
         // Draw just the stroke line - no fill

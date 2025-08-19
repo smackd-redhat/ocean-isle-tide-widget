@@ -20,7 +20,7 @@ interface NoaaApiService {
         @Query("datum") datum: String = "MLLW",
         @Query("time_zone") timeZone: String = "lst_ldt",
         @Query("units") units: String = "english",
-        @Query("interval") interval: String = "hilo", // High/low tide times only
+        @Query("interval") interval: String = "60", // 60-minute intervals for smooth curves
         @Query("format") format: String = "json"
     ): Response<NoaaResponse>
 }
@@ -63,15 +63,8 @@ class TideApiService {
                     )
                 } ?: emptyList()
                 
-                // If we got hilo data, we need to interpolate between the points
-                val interpolatedData = if (predictions.isNotEmpty()) {
-                    interpolateFromHiLoData(predictions)
-                } else {
-                    predictions
-                }
-                
-                android.util.Log.d("TideApiService", "Using real NOAA data - ${predictions.size} hilo points, ${interpolatedData.size} interpolated")
-                return interpolatedData
+                android.util.Log.d("TideApiService", "Using real NOAA data - ${predictions.size} hourly points")
+                return predictions
             } else {
                 // Fallback to mock data if API fails
                 android.util.Log.d("TideApiService", "Using mock data - NOAA API response not successful: ${response.code()}")
