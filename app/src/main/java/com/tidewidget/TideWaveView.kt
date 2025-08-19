@@ -89,14 +89,13 @@ class TideWaveView @JvmOverloads constructor(
         val width = width.toFloat()
         val height = height.toFloat()
         
-        // Scale to 1/3 of screen height
-        val scaledHeight = height / 3f
+        // Use full widget area
         val padding = 30f
         val chartWidth = width - 2 * padding
-        val chartHeight = scaledHeight - 2 * padding - 40f // Extra space for labels
+        val chartHeight = height - 2 * padding - 40f // Extra space for labels
         
-        // Draw background only for the scaled area
-        canvas.drawRect(0f, 0f, width, scaledHeight, Paint().apply {
+        // Draw background for full widget area
+        canvas.drawRect(0f, 0f, width, height, Paint().apply {
             color = Color.parseColor("#F8F9FA")
         })
         
@@ -140,8 +139,8 @@ class TideWaveView @JvmOverloads constructor(
             canvas.drawLine(padding, y, padding + chartWidth, y, gridPaint)
         }
         
-        // Vertical grid lines (time intervals)
-        val timeSteps = 6 // Every 4 hours for 24 hours
+        // Vertical grid lines (time intervals) - 5 lines for 24 hours
+        val timeSteps = 4 // 4 intervals = 5 lines (00:00, 06:00, 12:00, 18:00, 00:00)
         for (i in 0..timeSteps) {
             val x = padding + (i.toFloat() / timeSteps) * chartWidth
             canvas.drawLine(x, padding, x, padding + chartHeight, gridPaint)
@@ -151,33 +150,173 @@ class TideWaveView @JvmOverloads constructor(
     private fun drawSmoothWave(canvas: Canvas, padding: Float, chartWidth: Float, chartHeight: Float, 
                               minHeight: Float, heightRange: Float, startTime: Long, timeRange: Long) {
         
-        wavePath.reset()
-        
         if (tidePoints.isEmpty()) return
         
-        // Use actual NOAA tide data points for accurate representation
+        // Create a stroke paint for the sine wave line
+        val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = 4f
+            color = Color.parseColor("#2E5B8A")
+        }
+        
+        // Analyze NOAA data to extract tidal parameters
+        val tideParams = analyzeTidalPattern()
+        
+        // Generate pure mathematical sine wave with many points for smoothness
+        val numPoints = (chartWidth * 2).toInt()
+        val path = Path()
+        
         var isFirst = true
-        for (point in tidePoints) {
-            val x = padding + ((point.timeMillis - startTime).toFloat() / timeRange) * chartWidth
-            val clampedHeight = point.height.coerceIn(-1f, 7f)
+        for (i in 0..numPoints) {
+            val timeProgress = i.toFloat() / numPoints
+            val timeHours = timeProgress * 24f // 24 hours
+            
+            // Generate smooth sine wave based on tidal pattern
+            val height = generateSineWaveHeight(timeHours, tideParams)
+            val clampedHeight = height.coerceIn(-1f, 7f)
+            
+            val x = padding + timeProgress * chartWidth
             val y = padding + chartHeight - ((clampedHeight - minHeight) / heightRange) * chartHeight
             
             if (isFirst) {
-                wavePath.moveTo(x, y)
+                path.moveTo(x, y)
                 isFirst = false
             } else {
-                wavePath.lineTo(x, y)
+                path.lineTo(x, y)
             }
         }
         
-        // Close the path to create a filled area
-        val lastX = padding + chartWidth
-        val lastY = padding + chartHeight
-        wavePath.lineTo(lastX, lastY)
-        wavePath.lineTo(padding, lastY)
-        wavePath.close()
+        // Draw just the stroke line - no fill
+        canvas.drawPath(path, strokePaint)
+    }
+    
+    private fun analyzeTidalPattern(): TidalParams {
+        if (tidePoints.isEmpty()) {
+            return TidalParams(amplitude = 3f, meanLevel = 3f, phase = 0f)
+        }
         
-        canvas.drawPath(wavePath, wavePaint)
+        // Calculate mean tide level
+        val meanLevel = tidePoints.map { it.height }.average().toFloat()
+        
+        // Find high and low points to calculate amplitude
+        val maxHeight = tidePoints.maxOfOrNull { it.height } ?: meanLevel
+        val minHeight = tidePoints.minOfOrNull { it.height } ?: meanLevel
+        val amplitude = (maxHeight - minHeight) / 2f
+        
+        // Find first high tide to calculate phase
+        val firstHigh = tidePoints.find { it.isHighTide }
+        val phase = if (firstHigh != null) {
+            val calendar = Calendar.getInstance().apply { timeInMillis = firstHigh.timeMillis }
+            val hourOfDay = calendar.get(Calendar.HOUR_OF_DAY) + calendar.get(Calendar.MINUTE) / 60f
+            hourOfDay * PI.toFloat() / 12f // Convert to radians
+        } else {
+            0f
+        }
+        
+        return TidalParams(amplitude, meanLevel, phase)
+    }
+    
+    private fun generateSineWaveHeight(timeHours: Float, params: TidalParams): Float {
+        // Mixed semi-diurnal tide: principal lunar semi-diurnal (M2) + lunar diurnal (K1/O1)
+        val m2Period = 12.42f // Principal lunar semi-diurnal component
+        val k1Period = 24.07f // Lunar diurnal component
+        
+        val omegaM2 = 2f * PI.toFloat() / m2Period
+        val omegaK1 = 2f * PI.toFloat() / k1Period
+        
+        // Main semi-diurnal component (dominant)
+        val m2Component = params.amplitude * sin(omegaM2 * timeHours + params.phase)
+        
+        // Diurnal inequality component (creates the asymmetry)
+        val k1Component = params.amplitude * 0.3f * sin(omegaK1 * timeHours + params.phase * 0.5f)
+        
+        // Combine components to create mixed semi-diurnal pattern
+        return params.meanLevel + m2Component + k1Component
+    }
+    
+    data class TidalParams(
+        val amplitude: Float,
+        val meanLevel: Float, 
+        val phase: Float
+    )
+    
+    private fun getSmoothInterpolatedHeight(targetTime: Long): Float {
+        if (tidePoints.isEmpty()) return 3f
+        if (tidePoints.size == 1) return tidePoints[0].height
+        
+        // Find the closest data points for interpolation
+        var beforeIndex = -1
+        var afterIndex = -1
+        
+        for (i in tidePoints.indices) {
+            if (tidePoints[i].timeMillis <= targetTime) {
+                beforeIndex = i
+            } else {
+                afterIndex = i
+                break
+            }
+        }
+        
+        // Handle edge cases
+        if (beforeIndex == -1) return tidePoints.first().height
+        if (afterIndex == -1) return tidePoints.last().height
+        
+        val p1 = tidePoints[beforeIndex]
+        val p2 = tidePoints[afterIndex]
+        
+        // Get surrounding points for smooth interpolation
+        val p0 = if (beforeIndex > 0) tidePoints[beforeIndex - 1] else p1
+        val p3 = if (afterIndex < tidePoints.size - 1) tidePoints[afterIndex + 1] else p2
+        
+        // Calculate normalized time position (0.0 to 1.0)
+        val t = (targetTime - p1.timeMillis).toDouble() / (p2.timeMillis - p1.timeMillis).toDouble()
+        
+        // Use Hermite interpolation for very smooth curves
+        val t2 = t * t
+        val t3 = t2 * t
+        
+        // Hermite basis functions
+        val h1 = 2 * t3 - 3 * t2 + 1
+        val h2 = -2 * t3 + 3 * t2
+        val h3 = t3 - 2 * t2 + t
+        val h4 = t3 - t2
+        
+        // Calculate tangents for smooth curve
+        val m1 = (p2.height - p0.height) / 2.0
+        val m2 = (p3.height - p1.height) / 2.0
+        
+        // Hermite interpolation
+        val result = h1 * p1.height + h2 * p2.height + h3 * m1 + h4 * m2
+        
+        return result.toFloat()
+    }
+    
+    private fun interpolateTideHeight(targetTime: Long): Float {
+        if (tidePoints.isEmpty()) return 3f
+        
+        // Find the two closest points to interpolate between
+        var beforePoint: TidePoint? = null
+        var afterPoint: TidePoint? = null
+        
+        for (point in tidePoints) {
+            if (point.timeMillis <= targetTime) {
+                beforePoint = point
+            } else {
+                afterPoint = point
+                break
+            }
+        }
+        
+        // Handle edge cases
+        if (beforePoint == null) return tidePoints.first().height
+        if (afterPoint == null) return tidePoints.last().height
+        if (beforePoint.timeMillis == afterPoint.timeMillis) return beforePoint.height
+        
+        // Linear interpolation between the two points
+        val timeProgress = (targetTime - beforePoint.timeMillis).toFloat() / 
+                          (afterPoint.timeMillis - beforePoint.timeMillis).toFloat()
+        
+        return beforePoint.height + timeProgress * (afterPoint.height - beforePoint.height)
     }
     
     
@@ -198,13 +337,7 @@ class TideWaveView @JvmOverloads constructor(
         val x = padding + timePosition * chartWidth
         
         // Draw red vertical line
-        canvas.drawLine(x, 0f, x, height.toFloat() / 3f, currentTimePaint)
-        
-        // Draw "NOW" label
-        textPaint.textSize = 12f
-        textPaint.color = Color.parseColor("#FF3B30")
-        textPaint.typeface = Typeface.DEFAULT_BOLD
-        canvas.drawText("NOW", x, padding - 10f, textPaint)
+        canvas.drawLine(x, 0f, x, height.toFloat(), currentTimePaint)
     }
     
     private fun drawLabels(canvas: Canvas, padding: Float, width: Float, height: Float, 
@@ -228,13 +361,13 @@ class TideWaveView @JvmOverloads constructor(
             canvas.drawText("${heightValue.format(0)}ft", padding - 8f, y, textPaint)
         }
         
-        // Time labels (bottom) - fixed times: 00:00, 06:00, 12:00, 18:00
+        // Time labels (bottom) - full 24 hours: 00:00, 06:00, 12:00, 18:00, 00:00
         textPaint.textAlign = Paint.Align.CENTER
         textPaint.textSize = 14f
-        val timeLabels = arrayOf("00:00", "06:00", "12:00", "18:00")
-        for (i in 0..3) {
-            val x = padding + (i.toFloat() / 3f) * (width - 2 * padding)
-            val y = height / 3f - 8f
+        val timeLabels = arrayOf("00:00", "06:00", "12:00", "18:00", "00:00")
+        for (i in 0..4) {
+            val x = padding + (i.toFloat() / 4f) * (width - 2 * padding)
+            val y = height - 8f
             canvas.drawText(timeLabels[i], x, y, textPaint)
         }
     }

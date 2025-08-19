@@ -141,31 +141,110 @@ class TideWidgetProvider : AppWidgetProvider() {
         private fun findCurrentTideHeight(tideData: List<TidePoint>, currentTime: Long): Float {
             if (tideData.isEmpty()) return 0f
             
-            // Find the closest tide point to current time
-            return tideData.minByOrNull { kotlin.math.abs(it.timeMillis - currentTime) }?.height ?: 0f
+            // Calculate current height using our sine wave model
+            val params = analyzeTidalPattern(tideData)
+            val calendar = Calendar.getInstance().apply { timeInMillis = currentTime }
+            val hourOfDay = calendar.get(Calendar.HOUR_OF_DAY) + calendar.get(Calendar.MINUTE) / 60f
+            
+            return generateSineWaveHeight(hourOfDay, params)
         }
         
         private fun findNextTide(tideData: List<TidePoint>, currentTime: Long): TidePoint? {
-            return tideData.firstOrNull { 
-                (it.isHighTide || it.isLowTide) && it.timeMillis > currentTime 
+            if (tideData.isEmpty()) return null
+            
+            val params = analyzeTidalPattern(tideData)
+            val calendar = Calendar.getInstance().apply { timeInMillis = currentTime }
+            val currentHour = calendar.get(Calendar.HOUR_OF_DAY) + calendar.get(Calendar.MINUTE) / 60f
+            
+            // Look ahead to find next high or low tide
+            for (minutesAhead in 1..1440) { // Search up to 24 hours ahead
+                val futureTime = currentTime + (minutesAhead * 60 * 1000L)
+                val futureCalendar = Calendar.getInstance().apply { timeInMillis = futureTime }
+                val futureHour = futureCalendar.get(Calendar.HOUR_OF_DAY) + futureCalendar.get(Calendar.MINUTE) / 60f
+                
+                val currentHeight = generateSineWaveHeight(currentHour, params)
+                val futureHeight = generateSineWaveHeight(futureHour, params)
+                val nextHeight = generateSineWaveHeight(futureHour + 0.1f, params)
+                
+                // Check if this is a peak (high tide) or trough (low tide)
+                if (futureHeight > currentHeight && futureHeight > nextHeight) {
+                    // Found high tide
+                    return TidePoint(futureTime, futureHeight, isHighTide = true, isLowTide = false)
+                } else if (futureHeight < currentHeight && futureHeight < nextHeight) {
+                    // Found low tide  
+                    return TidePoint(futureTime, futureHeight, isHighTide = false, isLowTide = true)
+                }
             }
+            
+            return null
         }
         
         private fun calculateTideTrend(tideData: List<TidePoint>, currentTime: Long): String {
-            if (tideData.size < 2) return "Unknown"
+            if (tideData.isEmpty()) return "Unknown"
             
-            val currentIndex = tideData.indexOfFirst { it.timeMillis >= currentTime }
-            if (currentIndex <= 0 || currentIndex >= tideData.size - 1) return "Unknown"
+            val params = analyzeTidalPattern(tideData)
+            val calendar = Calendar.getInstance().apply { timeInMillis = currentTime }
+            val currentHour = calendar.get(Calendar.HOUR_OF_DAY) + calendar.get(Calendar.MINUTE) / 60f
             
-            val previous = tideData[currentIndex - 1]
-            val next = tideData[currentIndex + 1]
+            val currentHeight = generateSineWaveHeight(currentHour, params)
+            val futureHeight = generateSineWaveHeight(currentHour + 0.05f, params) // 3 minutes ahead
             
             return when {
-                next.height > previous.height -> "Rising"
-                next.height < previous.height -> "Falling"
+                futureHeight > currentHeight + 0.01f -> "Rising"
+                futureHeight < currentHeight - 0.01f -> "Falling" 
                 else -> "Stable"
             }
         }
+        
+        private fun analyzeTidalPattern(tideData: List<TidePoint>): TidalParams {
+            if (tideData.isEmpty()) {
+                return TidalParams(amplitude = 3f, meanLevel = 3f, phase = 0f)
+            }
+            
+            // Calculate mean tide level
+            val meanLevel = tideData.map { it.height }.average().toFloat()
+            
+            // Find high and low points to calculate amplitude
+            val maxHeight = tideData.maxOfOrNull { it.height } ?: meanLevel
+            val minHeight = tideData.minOfOrNull { it.height } ?: meanLevel
+            val amplitude = (maxHeight - minHeight) / 2f
+            
+            // Find first high tide to calculate phase
+            val firstHigh = tideData.find { it.isHighTide }
+            val phase = if (firstHigh != null) {
+                val calendar = Calendar.getInstance().apply { timeInMillis = firstHigh.timeMillis }
+                val hourOfDay = calendar.get(Calendar.HOUR_OF_DAY) + calendar.get(Calendar.MINUTE) / 60f
+                hourOfDay * kotlin.math.PI.toFloat() / 12f // Convert to radians
+            } else {
+                0f
+            }
+            
+            return TidalParams(amplitude, meanLevel, phase)
+        }
+        
+        private fun generateSineWaveHeight(timeHours: Float, params: TidalParams): Float {
+            // Mixed semi-diurnal tide: principal lunar semi-diurnal (M2) + lunar diurnal (K1/O1)
+            val m2Period = 12.42f // Principal lunar semi-diurnal component
+            val k1Period = 24.07f // Lunar diurnal component
+            
+            val omegaM2 = 2f * kotlin.math.PI.toFloat() / m2Period
+            val omegaK1 = 2f * kotlin.math.PI.toFloat() / k1Period
+            
+            // Main semi-diurnal component (dominant)
+            val m2Component = params.amplitude * kotlin.math.sin(omegaM2 * timeHours + params.phase)
+            
+            // Diurnal inequality component (creates the asymmetry)
+            val k1Component = params.amplitude * 0.3f * kotlin.math.sin(omegaK1 * timeHours + params.phase * 0.5f)
+            
+            // Combine components to create mixed semi-diurnal pattern
+            return params.meanLevel + m2Component + k1Component
+        }
+        
+        data class TidalParams(
+            val amplitude: Float,
+            val meanLevel: Float, 
+            val phase: Float
+        )
         
         private fun createTideChartBitmap(context: Context, tideData: List<TidePoint>): Bitmap? {
             return try {
