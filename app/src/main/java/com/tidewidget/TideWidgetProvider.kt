@@ -1,5 +1,6 @@
 package com.tidewidget
 
+import android.app.AlarmManager
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
@@ -21,7 +22,8 @@ class TideWidgetProvider : AppWidgetProvider() {
     }
 
     override fun onEnabled(context: Context) {
-        // Enter relevant functionality for when the first widget is created
+        // Start periodic updates when first widget is created
+        schedulePeriodicUpdates(context)
     }
 
     override fun onDisabled(context: Context) {
@@ -265,5 +267,31 @@ class TideWidgetProvider : AppWidgetProvider() {
         }
         
         private fun Float.format(digits: Int): String = "%.${digits}f".format(this)
+        
+        private fun schedulePeriodicUpdates(context: Context) {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+            val intent = Intent(context, TideWidgetProvider::class.java).apply {
+                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                val appWidgetManager = AppWidgetManager.getInstance(context)
+                val appWidgetIds = appWidgetManager.getAppWidgetIds(android.content.ComponentName(context, TideWidgetProvider::class.java))
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds)
+            }
+            
+            val pendingIntent = PendingIntent.getBroadcast(
+                context, 
+                0, 
+                intent, 
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            
+            // Schedule updates every 6 minutes (360000 ms)
+            val updateInterval = 6 * 60 * 1000L // 6 minutes in milliseconds
+            alarmManager.setRepeating(
+                AlarmManager.RTC,
+                System.currentTimeMillis() + updateInterval,
+                updateInterval,
+                pendingIntent
+            )
+        }
     }
 }
