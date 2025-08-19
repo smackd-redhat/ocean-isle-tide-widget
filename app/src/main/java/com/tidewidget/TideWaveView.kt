@@ -166,32 +166,27 @@ class TideWaveView @JvmOverloads constructor(
         val numPoints = (chartWidth * 8).toInt() // 8 points per pixel for ultra-smoothness
         val path = Path()
         
-        // Convert tide points to screen coordinates
-        val screenPoints = tidePoints.map { point ->
-            val x = padding + ((point.timeMillis - startTime).toFloat() / timeRange) * chartWidth
-            val clampedHeight = point.height.coerceIn(-1f, 7f)
+        // Generate ultra-high resolution smooth curve (1 point per pixel)
+        val totalPixels = chartWidth.toInt()
+        var isFirst = true
+        
+        for (pixel in 0..totalPixels) {
+            val timeProgress = pixel.toFloat() / totalPixels
+            val currentTime = startTime + (timeProgress * timeRange).toLong()
+            
+            // Generate mathematically perfect smooth curve
+            val height = generatePerfectSmoothCurve(currentTime)
+            val clampedHeight = height.coerceIn(-1f, 7f)
+            
+            val x = padding + pixel.toFloat()
             val y = padding + chartHeight - ((clampedHeight - minHeight) / heightRange) * chartHeight
-            PointF(x, y)
-        }
-        
-        if (screenPoints.isEmpty()) return
-        
-        // Create smooth Bezier curves through the data points
-        path.moveTo(screenPoints[0].x, screenPoints[0].y)
-        
-        for (i in 1 until screenPoints.size) {
-            val prevPoint = screenPoints[i - 1]
-            val currentPoint = screenPoints[i]
-            val nextPoint = if (i < screenPoints.size - 1) screenPoints[i + 1] else currentPoint
             
-            // Calculate control points for smooth Bezier curve
-            val cp1x = prevPoint.x + (currentPoint.x - prevPoint.x) * 0.3f
-            val cp1y = prevPoint.y + (currentPoint.y - prevPoint.y) * 0.3f
-            val cp2x = currentPoint.x - (nextPoint.x - currentPoint.x) * 0.3f
-            val cp2y = currentPoint.y - (nextPoint.y - currentPoint.y) * 0.3f
-            
-            // Draw cubic Bezier curve
-            path.cubicTo(cp1x, cp1y, cp2x, cp2y, currentPoint.x, currentPoint.y)
+            if (isFirst) {
+                path.moveTo(x, y)
+                isFirst = false
+            } else {
+                path.lineTo(x, y)
+            }
         }
         
         // Draw just the stroke line - no fill
@@ -217,34 +212,31 @@ class TideWaveView @JvmOverloads constructor(
         val numPoints = (chartWidth * 8).toInt() // 8 points per pixel for ultra-smoothness
         val path = Path()
         
-        // Create canal tide points with lag and reduced amplitude
-        val canalPoints = tidePoints.map { point ->
-            val laggedTime = point.timeMillis + canalLagMs // Canal lags behind ocean
-            val canalHeight = point.height * 0.95f // 5% less amplitude
-            val x = padding + ((laggedTime - startTime).toFloat() / timeRange) * chartWidth
+        // Generate ultra-high resolution smooth canal curve (1 point per pixel)
+        val totalPixels = chartWidth.toInt()
+        var isFirst = true
+        
+        for (pixel in 0..totalPixels) {
+            val timeProgress = pixel.toFloat() / totalPixels
+            val currentTime = startTime + (timeProgress * timeRange).toLong()
+            
+            // Apply canal lag - get tide height from 1h45m ago
+            val laggedTime = currentTime - canalLagMs
+            
+            // Get ultra-smooth interpolated height with lag and reduced amplitude
+            val oceanHeight = generatePerfectSmoothCurve(laggedTime)
+            val canalHeight = oceanHeight * 0.95f // 5% less amplitude
             val clampedHeight = canalHeight.coerceIn(-1f, 7f)
+            
+            val x = padding + pixel.toFloat()
             val y = padding + chartHeight - ((clampedHeight - minHeight) / heightRange) * chartHeight
-            PointF(x, y)
-        }.filter { it.x >= padding && it.x <= padding + chartWidth } // Only points within chart area
-        
-        if (canalPoints.isEmpty()) return
-        
-        // Create smooth Bezier curves through the canal data points
-        path.moveTo(canalPoints[0].x, canalPoints[0].y)
-        
-        for (i in 1 until canalPoints.size) {
-            val prevPoint = canalPoints[i - 1]
-            val currentPoint = canalPoints[i]
-            val nextPoint = if (i < canalPoints.size - 1) canalPoints[i + 1] else currentPoint
             
-            // Calculate control points for smooth Bezier curve
-            val cp1x = prevPoint.x + (currentPoint.x - prevPoint.x) * 0.3f
-            val cp1y = prevPoint.y + (currentPoint.y - prevPoint.y) * 0.3f
-            val cp2x = currentPoint.x - (nextPoint.x - currentPoint.x) * 0.3f
-            val cp2y = currentPoint.y - (nextPoint.y - currentPoint.y) * 0.3f
-            
-            // Draw cubic Bezier curve
-            path.cubicTo(cp1x, cp1y, cp2x, cp2y, currentPoint.x, currentPoint.y)
+            if (isFirst) {
+                path.moveTo(x, y)
+                isFirst = false
+            } else {
+                path.lineTo(x, y)
+            }
         }
         
         // Draw just the stroke line - no fill
@@ -350,6 +342,33 @@ class TideWaveView @JvmOverloads constructor(
         val result = h1 * p1.height + h2 * p2.height + h3 * m1 + h4 * m2
         
         return result.toFloat()
+    }
+    
+    private fun generatePerfectSmoothCurve(targetTime: Long): Float {
+        if (tidePoints.isEmpty()) return 3f
+        
+        // Extract tidal parameters from NOAA data
+        val params = analyzeTidalPattern()
+        
+        // Convert time to hours since midnight
+        val calendar = Calendar.getInstance().apply { timeInMillis = targetTime }
+        val timeHours = calendar.get(Calendar.HOUR_OF_DAY) + calendar.get(Calendar.MINUTE) / 60f
+        
+        // Generate perfect smooth mixed semi-diurnal tide curve
+        val m2Period = 12.42f // Principal lunar semi-diurnal component
+        val k1Period = 24.07f // Lunar diurnal component
+        
+        val omegaM2 = 2f * PI.toFloat() / m2Period
+        val omegaK1 = 2f * PI.toFloat() / k1Period
+        
+        // Main semi-diurnal component (dominant)
+        val m2Component = params.amplitude * sin(omegaM2 * timeHours + params.phase)
+        
+        // Diurnal inequality component (creates the asymmetry)
+        val k1Component = params.amplitude * 0.3f * sin(omegaK1 * timeHours + params.phase * 0.5f)
+        
+        // Combine components to create perfectly smooth mixed semi-diurnal pattern
+        return params.meanLevel + m2Component + k1Component
     }
     
     private fun interpolateTideHeight(targetTime: Long): Float {
