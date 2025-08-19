@@ -178,4 +178,4 @@ For issues, questions, or feature requests:
 
 ---
 
-**Enjoy tracking the tides at Ocean Isle Beach! 🌊**
+**Enjoy tracking the tides at Ocean Isle Beach! 🌊**# ocean-isle-tide-widget
