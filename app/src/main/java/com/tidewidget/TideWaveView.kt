@@ -220,9 +220,9 @@ class TideWaveView @JvmOverloads constructor(
             val timeProgress = i.toFloat() / numPoints
             val timeHours = timeProgress * 24f // 24 hours
             
-            // Apply canal lag with same amplitude
+            // Apply canal lag with slightly reduced amplitude
             val laggedTimeHours = timeHours - canalLagHours
-            val canalParams = tideParams // Same amplitude as ocean tide
+            val canalParams = tideParams.copy(amplitude = tideParams.amplitude * 0.95f) // 5% less amplitude
             
             // Generate smooth sine wave based on lagged tidal pattern
             val height = generateSineWaveHeight(laggedTimeHours, canalParams)
@@ -399,14 +399,22 @@ class TideWaveView @JvmOverloads constructor(
         textPaint.color = Color.parseColor("#333333")
         textPaint.typeface = Typeface.DEFAULT_BOLD
         
-        // Title
-        textPaint.textAlign = Paint.Align.CENTER
-        textPaint.textSize = 22f
-        canvas.drawText("Tide Chart", width / 2f, 30f, textPaint)
+        // Legend instead of title
+        textPaint.textAlign = Paint.Align.LEFT
+        textPaint.textSize = 16f
+        
+        // Ocean tide legend (blue)
+        textPaint.color = Color.parseColor("#2E5B8A") // Match ocean tide color
+        canvas.drawText("● Ocean", padding + 10f, 25f, textPaint)
+        
+        // Canal tide legend (green)
+        textPaint.color = Color.parseColor("#4CAF50") // Match canal tide color
+        canvas.drawText("● Canal", padding + 120f, 25f, textPaint)
         
         // Height labels (left side) - 1-foot increments from 7 to -1
         textPaint.textAlign = Paint.Align.RIGHT
         textPaint.textSize = 16f
+        textPaint.color = Color.parseColor("#333333") // Reset to dark gray
         val heightSteps = 8 // Show 9 labels: 7, 6, 5, 4, 3, 2, 1, 0, -1
         for (i in 0..heightSteps) {
             val heightValue = 7f - i.toFloat()
@@ -417,6 +425,7 @@ class TideWaveView @JvmOverloads constructor(
         // Time labels (bottom) - full 24 hours: 00:00, 06:00, 12:00, 18:00, 00:00
         textPaint.textAlign = Paint.Align.CENTER
         textPaint.textSize = 14f
+        textPaint.color = Color.parseColor("#333333") // Reset to dark gray
         val timeLabels = arrayOf("00:00", "06:00", "12:00", "18:00", "00:00")
         for (i in 0..4) {
             val x = padding + (i.toFloat() / 4f) * (width - 2 * padding)
