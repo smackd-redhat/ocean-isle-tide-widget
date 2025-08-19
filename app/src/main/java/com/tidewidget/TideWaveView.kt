@@ -111,8 +111,11 @@ class TideWaveView @JvmOverloads constructor(
         // Draw grid lines
         drawGrid(canvas, padding, chartWidth, chartHeight, minHeight, maxHeight)
         
-        // Draw smooth sine wave path
+        // Draw smooth sine wave path (ocean tide)
         drawSmoothWave(canvas, padding, chartWidth, chartHeight, minHeight, heightRange, startTime, timeRange)
+        
+        // Draw canal tide wave (1h45m lag)
+        drawCanalWave(canvas, padding, chartWidth, chartHeight, minHeight, heightRange, startTime, timeRange)
         
         // Draw current time indicator
         drawCurrentTimeIndicator(canvas, padding, chartWidth, chartHeight, startTime, timeRange)
@@ -188,6 +191,56 @@ class TideWaveView @JvmOverloads constructor(
         
         // Draw just the stroke line - no fill
         canvas.drawPath(path, strokePaint)
+    }
+    
+    private fun drawCanalWave(canvas: Canvas, padding: Float, chartWidth: Float, chartHeight: Float, 
+                             minHeight: Float, heightRange: Float, startTime: Long, timeRange: Long) {
+        
+        if (tidePoints.isEmpty()) return
+        
+        // Create a stroke paint for the canal tide line (green)
+        val canalStrokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            style = Paint.Style.STROKE
+            strokeWidth = 3f
+            color = Color.parseColor("#4CAF50") // Green color for canal
+        }
+        
+        // Analyze NOAA data to extract tidal parameters
+        val tideParams = analyzeTidalPattern()
+        
+        // Canal lag: 1 hour 45 minutes = 1.75 hours
+        val canalLagHours = 1.75f
+        
+        // Generate canal tide wave with lag and reduced amplitude
+        val numPoints = (chartWidth * 2).toInt()
+        val path = Path()
+        
+        var isFirst = true
+        for (i in 0..numPoints) {
+            val timeProgress = i.toFloat() / numPoints
+            val timeHours = timeProgress * 24f // 24 hours
+            
+            // Apply canal lag and slight amplitude reduction (canals have less tidal range)
+            val laggedTimeHours = timeHours - canalLagHours
+            val canalParams = tideParams.copy(amplitude = tideParams.amplitude * 0.85f) // 15% less amplitude
+            
+            // Generate smooth sine wave based on lagged tidal pattern
+            val height = generateSineWaveHeight(laggedTimeHours, canalParams)
+            val clampedHeight = height.coerceIn(-1f, 7f)
+            
+            val x = padding + timeProgress * chartWidth
+            val y = padding + chartHeight - ((clampedHeight - minHeight) / heightRange) * chartHeight
+            
+            if (isFirst) {
+                path.moveTo(x, y)
+                isFirst = false
+            } else {
+                path.lineTo(x, y)
+            }
+        }
+        
+        // Draw just the stroke line - no fill
+        canvas.drawPath(path, canalStrokePaint)
     }
     
     private fun analyzeTidalPattern(): TidalParams {
