@@ -153,18 +153,23 @@ class TideWidgetProvider : AppWidgetProvider() {
             // Use the same perfect curve function to find next tide
             val currentHeight = generatePerfectSmoothCurve(tideData, currentTime)
             
-            // Look ahead to find next high or low tide using same curve logic
-            for (minutesAhead in 10..1440 step 5) { // Search up to 24 hours ahead, 5-minute steps
+            // Look ahead to find next high or low tide using precise peak/trough detection
+            for (minutesAhead in 5..1440 step 1) { // Search up to 24 hours ahead, 1-minute precision
                 val futureTime = currentTime + (minutesAhead * 60 * 1000L)
                 val futureHeight = generatePerfectSmoothCurve(tideData, futureTime)
-                val nextHeight = generatePerfectSmoothCurve(tideData, futureTime + (5 * 60 * 1000L))
-                val prevHeight = generatePerfectSmoothCurve(tideData, futureTime - (5 * 60 * 1000L))
+                val nextHeight = generatePerfectSmoothCurve(tideData, futureTime + (60 * 1000L)) // 1 minute later
+                val prevHeight = generatePerfectSmoothCurve(tideData, futureTime - (60 * 1000L)) // 1 minute earlier
                 
-                // Check if this is a peak (high tide) or trough (low tide)
-                if (futureHeight > prevHeight && futureHeight > nextHeight && futureHeight > currentHeight + 0.1f) {
+                // More precise peak/trough detection
+                val isLocalMaximum = futureHeight > prevHeight && futureHeight > nextHeight && 
+                                   futureHeight > currentHeight + 0.05f
+                val isLocalMinimum = futureHeight < prevHeight && futureHeight < nextHeight && 
+                                   futureHeight < currentHeight - 0.05f
+                
+                if (isLocalMaximum) {
                     // Found high tide
                     return TidePoint(futureTime, futureHeight, isHighTide = true, isLowTide = false)
-                } else if (futureHeight < prevHeight && futureHeight < nextHeight && futureHeight < currentHeight - 0.1f) {
+                } else if (isLocalMinimum) {
                     // Found low tide  
                     return TidePoint(futureTime, futureHeight, isHighTide = false, isLowTide = true)
                 }
@@ -176,13 +181,19 @@ class TideWidgetProvider : AppWidgetProvider() {
         private fun calculateTideTrend(tideData: List<TidePoint>, currentTime: Long): String {
             if (tideData.isEmpty()) return "Unknown"
             
-            // Use the same perfect curve function for trend calculation
+            // Use the same perfect curve function for trend calculation with higher precision
             val currentHeight = generatePerfectSmoothCurve(tideData, currentTime)
-            val futureHeight = generatePerfectSmoothCurve(tideData, currentTime + (10 * 60 * 1000L)) // 10 minutes ahead
+            val pastHeight = generatePerfectSmoothCurve(tideData, currentTime - (5 * 60 * 1000L)) // 5 minutes ago
+            val futureHeight = generatePerfectSmoothCurve(tideData, currentTime + (5 * 60 * 1000L)) // 5 minutes ahead
+            
+            // Calculate rate of change
+            val recentChange = currentHeight - pastHeight
+            val futureChange = futureHeight - currentHeight
+            val averageChange = (recentChange + futureChange) / 2f
             
             return when {
-                futureHeight > currentHeight + 0.01f -> "Rising"
-                futureHeight < currentHeight - 0.01f -> "Falling" 
+                averageChange > 0.005f -> "Rising"
+                averageChange < -0.005f -> "Falling" 
                 else -> "Stable"
             }
         }
