@@ -94,19 +94,10 @@ class TideWidgetProvider : AppWidgetProvider() {
             // Calculate current tide info
             val currentTime = System.currentTimeMillis()
             val currentTide = findCurrentTideHeight(tideData, currentTime)
-            val nextTide = findNextTide(tideData, currentTime)
             val trend = calculateTideTrend(tideData, currentTime)
             
             // Update current height
             views.setTextViewText(R.id.current_height, "${currentTide.format(1)} ft")
-            
-            // Update next tide
-            if (nextTide != null) {
-                val nextTideTime = timeFormat.format(Date(nextTide.timeMillis))
-                val nextTideType = if (nextTide.isHighTide) "Next High" else "Next Low"
-                views.setTextViewText(R.id.next_tide_label, nextTideType)
-                views.setTextViewText(R.id.next_tide_time, nextTideTime)
-            }
             
             // Update trend
             views.setTextViewText(R.id.tide_trend, trend)
@@ -134,7 +125,6 @@ class TideWidgetProvider : AppWidgetProvider() {
         ) {
             views.setViewVisibility(R.id.loading_overlay, android.view.View.GONE)
             views.setTextViewText(R.id.current_height, "Error")
-            views.setTextViewText(R.id.next_tide_time, "Retry")
             views.setTextViewText(R.id.tide_trend, "N/A")
             
             appWidgetManager.updateAppWidget(appWidgetId, views)
@@ -143,34 +133,58 @@ class TideWidgetProvider : AppWidgetProvider() {
         private fun findCurrentTideHeight(tideData: List<TidePoint>, currentTime: Long): Float {
             if (tideData.isEmpty()) return 0f
             
-            // Use the EXACT same curve function as the visual display
-            return generatePerfectSmoothCurve(tideData, currentTime)
+            // Calculate the time that corresponds to where the red line appears on the 24-hour chart
+            val calendar = Calendar.getInstance()
+            val hourOfDay = calendar.get(Calendar.HOUR_OF_DAY)
+            val minuteOfHour = calendar.get(Calendar.MINUTE)
+            val hoursDecimal = hourOfDay + minuteOfHour / 60f
+            
+            // Map the current hour position to the data time range (same as visual chart)
+            val startTime = tideData.firstOrNull()?.timeMillis ?: currentTime
+            val endTime = tideData.lastOrNull()?.timeMillis ?: currentTime
+            val timeRange = endTime - startTime
+            
+            // Calculate the time position in the data range that corresponds to current hour of day
+            val timeProgress = (hoursDecimal / 24f).coerceIn(0f, 1f)
+            val mappedTime = startTime + (timeProgress * timeRange).toLong()
+            
+            // Use the EXACT same curve function as the visual display at the mapped time
+            return generatePerfectSmoothCurve(tideData, mappedTime)
         }
         
         private fun findNextTide(tideData: List<TidePoint>, currentTime: Long): TidePoint? {
             if (tideData.isEmpty()) return null
             
-            // Use the same perfect curve function to find next tide
-            val currentHeight = generatePerfectSmoothCurve(tideData, currentTime)
+            // Calculate the mapped time that corresponds to where the red line appears (same as visual chart)
+            val calendar = Calendar.getInstance()
+            val hourOfDay = calendar.get(Calendar.HOUR_OF_DAY)
+            val minuteOfHour = calendar.get(Calendar.MINUTE)
+            val hoursDecimal = hourOfDay + minuteOfHour / 60f
             
-            // Look ahead to find next high or low tide using precise peak/trough detection
-            for (minutesAhead in 5..1440 step 1) { // Search up to 24 hours ahead, 1-minute precision
-                val futureTime = currentTime + (minutesAhead * 60 * 1000L)
+            val startTime = tideData.firstOrNull()?.timeMillis ?: currentTime
+            val endTime = tideData.lastOrNull()?.timeMillis ?: currentTime
+            val timeRange = endTime - startTime
+            
+            val timeProgress = (hoursDecimal / 24f).coerceIn(0f, 1f)
+            val mappedCurrentTime = startTime + (timeProgress * timeRange).toLong()
+            
+            // Get current height at the mapped time
+            val currentHeight = generatePerfectSmoothCurve(tideData, mappedCurrentTime)
+            
+            // Look forward from the mapped current time to find next tide extreme
+            val hoursToSearch = 12f // Search 12 hours ahead
+            val minutesToSearch = (hoursToSearch * 60).toInt()
+            
+            for (minutesAhead in 30..minutesToSearch step 10) {
+                val futureTime = mappedCurrentTime + (minutesAhead * 60 * 1000L)
                 val futureHeight = generatePerfectSmoothCurve(tideData, futureTime)
-                val nextHeight = generatePerfectSmoothCurve(tideData, futureTime + (60 * 1000L)) // 1 minute later
-                val prevHeight = generatePerfectSmoothCurve(tideData, futureTime - (60 * 1000L)) // 1 minute earlier
+                val nextHeight = generatePerfectSmoothCurve(tideData, futureTime + (10 * 60 * 1000L))
+                val prevHeight = generatePerfectSmoothCurve(tideData, futureTime - (10 * 60 * 1000L))
                 
-                // More precise peak/trough detection
-                val isLocalMaximum = futureHeight > prevHeight && futureHeight > nextHeight && 
-                                   futureHeight > currentHeight + 0.05f
-                val isLocalMinimum = futureHeight < prevHeight && futureHeight < nextHeight && 
-                                   futureHeight < currentHeight - 0.05f
-                
-                if (isLocalMaximum) {
-                    // Found high tide
+                // Look for clear peaks and troughs
+                if (futureHeight > prevHeight && futureHeight > nextHeight && futureHeight > currentHeight + 0.5f) {
                     return TidePoint(futureTime, futureHeight, isHighTide = true, isLowTide = false)
-                } else if (isLocalMinimum) {
-                    // Found low tide  
+                } else if (futureHeight < prevHeight && futureHeight < nextHeight && futureHeight < currentHeight - 0.5f) {
                     return TidePoint(futureTime, futureHeight, isHighTide = false, isLowTide = true)
                 }
             }
@@ -181,10 +195,23 @@ class TideWidgetProvider : AppWidgetProvider() {
         private fun calculateTideTrend(tideData: List<TidePoint>, currentTime: Long): String {
             if (tideData.isEmpty()) return "Unknown"
             
-            // Use the same perfect curve function for trend calculation with higher precision
-            val currentHeight = generatePerfectSmoothCurve(tideData, currentTime)
-            val pastHeight = generatePerfectSmoothCurve(tideData, currentTime - (5 * 60 * 1000L)) // 5 minutes ago
-            val futureHeight = generatePerfectSmoothCurve(tideData, currentTime + (5 * 60 * 1000L)) // 5 minutes ahead
+            // Calculate the mapped time that corresponds to where the red line appears (same as visual chart)
+            val calendar = Calendar.getInstance()
+            val hourOfDay = calendar.get(Calendar.HOUR_OF_DAY)
+            val minuteOfHour = calendar.get(Calendar.MINUTE)
+            val hoursDecimal = hourOfDay + minuteOfHour / 60f
+            
+            val startTime = tideData.firstOrNull()?.timeMillis ?: currentTime
+            val endTime = tideData.lastOrNull()?.timeMillis ?: currentTime
+            val timeRange = endTime - startTime
+            
+            val timeProgress = (hoursDecimal / 24f).coerceIn(0f, 1f)
+            val mappedCurrentTime = startTime + (timeProgress * timeRange).toLong()
+            
+            // Use the same perfect curve function for trend calculation at mapped time
+            val currentHeight = generatePerfectSmoothCurve(tideData, mappedCurrentTime)
+            val pastHeight = generatePerfectSmoothCurve(tideData, mappedCurrentTime - (5 * 60 * 1000L)) // 5 minutes ago
+            val futureHeight = generatePerfectSmoothCurve(tideData, mappedCurrentTime + (5 * 60 * 1000L)) // 5 minutes ahead
             
             // Calculate rate of change
             val recentChange = currentHeight - pastHeight
